@@ -1,0 +1,71 @@
+name: Sync to Hugging Face Space
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: huggingface-space-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          lfs: true
+
+      - name: Verify Python syntax
+        run: |
+          if [ -f app.py ]; then
+            python -m py_compile app.py
+          fi
+
+      - name: Upload project to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$HF_TOKEN" ]; then
+            echo "::error::HF_TOKEN secret is missing"
+            exit 1
+          fi
+
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git clone \
+            "https://oauth2:${HF_TOKEN}@huggingface.co/spaces/ChoLuckyHexSexySuccubusQueen135Age/charactersheet-lora-demo" \
+            /tmp/hf-space
+
+          rsync -av \
+            --exclude=".git/" \
+            --exclude=".github/" \
+            --exclude=".env" \
+            --exclude=".env.*" \
+            --exclude="*.zip" \
+            --exclude="__pycache__/" \
+            --exclude="*.pyc" \
+            ./ /tmp/hf-space/
+
+          cd /tmp/hf-space
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "No changes to upload"
+          else
+            git commit -m "Sync CharacterSheet project from GitHub"
+            git push origin HEAD:main
+          fi
+
+          echo "Hugging Face Space sync completed"
