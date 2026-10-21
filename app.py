@@ -16,18 +16,20 @@ import gc
 from datetime import datetime, timezone
 from pathlib import Path
 
+# Import ZeroGPU before torch, diffusers or any CUDA-aware dependency.
+# Otherwise spaces raises: CUDA has been initialized before importing spaces.
+try:
+    import spaces
+    gpu = spaces.GPU(duration=180)
+except ImportError:
+    gpu = lambda f: f
+
 import gradio as gr
 import torch
 from PIL import Image, ImageOps
 from huggingface_hub import hf_hub_download
 from safetensors import safe_open
 from diffusers import Flux2KleinPipeline
-
-try:
-    import spaces
-    gpu = spaces.GPU(duration=180)
-except ImportError:
-    gpu = lambda f: f
 
 BASE_MODEL = os.getenv('BASE_MODEL_ID', 'unsloth/FLUX.2-klein-9B')
 TOKEN = os.getenv('HF_TOKEN') or None
