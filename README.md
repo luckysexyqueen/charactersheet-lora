@@ -1,3 +1,14 @@
+---
+title: CharacterSheet Triple-LoRA
+emoji: 🎨
+colorFrom: purple
+colorTo: blue
+sdk: gradio
+python_version: "3.11"
+app_file: app.py
+pinned: false
+---
+
 # CharacterSheet Triple-LoRA — guarded auto-recovery
 
 This package preserves the previous app and portable operations, and adds `auto_repair.py`.
